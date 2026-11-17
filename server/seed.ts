@@ -270,25 +270,27 @@ async function runSeed(): Promise<void> {
   if (markerSnap.exists) return;
 
   const nowIso = new Date().toISOString();
+  const batch = adminDb.batch();
 
   // 1. Connectivity doc for client boot probe
-  await adminDb.collection('test').doc('connection').set({ ok: true, updatedAt: nowIso }, { merge: true });
+  batch.set(adminDb.collection('test').doc('connection'), { ok: true, updatedAt: nowIso }, { merge: true });
 
   // 2. Game rules
-  await adminDb.collection('config').doc('game_rules').set(DEFAULT_GAME_RULES, { merge: true });
+  batch.set(adminDb.collection('config').doc('game_rules'), DEFAULT_GAME_RULES, { merge: true });
 
   // 3. Creatures
   const creatureIds: string[] = [];
   for (const c of SEED_CREATURES) {
     const id = `creature_${c.artKey}`;
     creatureIds.push(id);
-    await adminDb.collection('creatures').doc(id).set({ id, ...c }, { merge: true });
+    batch.set(adminDb.collection('creatures').doc(id), { id, ...c }, { merge: true });
   }
 
   // 4. Catalog items (buildings & decorations)
   for (const item of SEED_ITEMS) {
     const id = `item_${item.slug}`;
-    await adminDb.collection('catalog_items').doc(id).set(
+    batch.set(
+      adminDb.collection('catalog_items').doc(id),
       {
         id,
         category: item.category,
@@ -306,7 +308,8 @@ async function runSeed(): Promise<void> {
   // 5. Achievements
   for (const ach of SEED_ACHIEVEMENTS) {
     const id = `ach_${ach.slug}`;
-    await adminDb.collection('achievements').doc(id).set(
+    batch.set(
+      adminDb.collection('achievements').doc(id),
       {
         id,
         code: ach.code,
@@ -323,7 +326,8 @@ async function runSeed(): Promise<void> {
 
   // 6. Default Classroom Teacher & Classroom
   const teacherId = 'teacher_rivera';
-  await adminDb.collection('teachers').doc(teacherId).set(
+  batch.set(
+    adminDb.collection('teachers').doc(teacherId),
     {
       uid: teacherId,
       email: 'teacher@quiztopia.edu',
@@ -336,7 +340,8 @@ async function runSeed(): Promise<void> {
   );
 
   const classId = 'class_grade4_explorers';
-  await adminDb.collection('classes').doc(classId).set(
+  batch.set(
+    adminDb.collection('classes').doc(classId),
     {
       id: classId,
       teacherId,
@@ -352,7 +357,8 @@ async function runSeed(): Promise<void> {
   // 7. Three Academic Terms for the Classroom
   for (const termNum of [1, 2, 3] as const) {
     const termId = `${classId}_term_${termNum}`;
-    await adminDb.collection('academic_terms').doc(termId).set(
+    batch.set(
+      adminDb.collection('academic_terms').doc(termId),
       {
         id: termId,
         classId,
@@ -449,7 +455,8 @@ async function runSeed(): Promise<void> {
     }));
     const captain = memberObjects[0];
 
-    await adminDb.collection('teams').doc(t.id).set(
+    batch.set(
+      adminDb.collection('teams').doc(t.id),
       {
         id: t.id,
         classId,
@@ -465,9 +472,10 @@ async function runSeed(): Promise<void> {
       { merge: true }
     );
 
-    await adminDb.collection('team_avatars').doc(t.id).set(t.avatar, { merge: true });
+    batch.set(adminDb.collection('team_avatars').doc(t.id), t.avatar, { merge: true });
 
-    await adminDb.collection('team_wallets').doc(t.id).set(
+    batch.set(
+      adminDb.collection('team_wallets').doc(t.id),
       {
         teamId: t.id,
         balance: t.coins,
@@ -476,7 +484,8 @@ async function runSeed(): Promise<void> {
       { merge: true }
     );
 
-    await adminDb.collection('coin_transactions').doc(`seed_tx_${t.id}`).set(
+    batch.set(
+      adminDb.collection('coin_transactions').doc(`seed_tx_${t.id}`),
       {
         id: `seed_tx_${t.id}`,
         teamId: t.id,
@@ -491,7 +500,8 @@ async function runSeed(): Promise<void> {
 
     // Starter Central Castle
     const starterInvId = `seed_inv_${t.id}_castle`;
-    await adminDb.collection('team_inventory_items').doc(starterInvId).set(
+    batch.set(
+      adminDb.collection('team_inventory_items').doc(starterInvId),
       {
         id: starterInvId,
         teamId: t.id,
@@ -504,7 +514,8 @@ async function runSeed(): Promise<void> {
     let creaturePower = 0;
     for (const cid of t.starterCreatures) {
       const tcId = `seed_tc_${t.id}_${cid}`;
-      await adminDb.collection('team_creatures').doc(tcId).set(
+      batch.set(
+        adminDb.collection('team_creatures').doc(tcId),
         {
           id: tcId,
           teamId: t.id,
@@ -518,7 +529,8 @@ async function runSeed(): Promise<void> {
     }
 
     const totalPower = 300 + creaturePower;
-    await adminDb.collection('team_islands').doc(t.id).set(
+    batch.set(
+      adminDb.collection('team_islands').doc(t.id),
       {
         teamId: t.id,
         theme: 'emerald_isle',
@@ -544,7 +556,8 @@ async function runSeed(): Promise<void> {
   }
 
   // 9. Starter Published Quizzes
-  await adminDb.collection('quizzes').doc('quiz_solar_system').set(
+  batch.set(
+    adminDb.collection('quizzes').doc('quiz_solar_system'),
     {
       id: 'quiz_solar_system',
       teacherId,
@@ -619,7 +632,8 @@ async function runSeed(): Promise<void> {
     { merge: true }
   );
 
-  await adminDb.collection('quizzes').doc('quiz_fractions_quest').set(
+  batch.set(
+    adminDb.collection('quizzes').doc('quiz_fractions_quest'),
     {
       id: 'quiz_fractions_quest',
       teacherId,
@@ -666,7 +680,8 @@ async function runSeed(): Promise<void> {
     { merge: true }
   );
 
-  await markerRef.set({ seededAt: nowIso, version: 1 });
+  batch.set(markerRef, { seededAt: nowIso, version: 1 });
+  await batch.commit();
 }
 
 export async function ensureSeeded(): Promise<void> {
