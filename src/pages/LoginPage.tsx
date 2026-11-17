@@ -69,7 +69,20 @@ export function LoginPage({
       });
       onSuccess(res.user);
     } catch (err: any) {
-      setError(err?.message || 'Google Sign-In did not complete.');
+      const code = err?.code || '';
+      const msg = String(err?.message || '');
+      if (code === 'auth/unauthorized-domain' || msg.includes('auth/unauthorized-domain')) {
+        const host = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+        setError(
+          `Google Sign-In is not yet authorized for "${host}". Add "${host}" in Firebase Console → Authentication → Settings → Authorized domains, or sign in / create an account with Teacher Email & Password above.`
+        );
+      } else if (code === 'auth/popup-blocked') {
+        setError('Sign-in popup was blocked by your browser. Please allow popups or use Teacher Email & Password.');
+      } else if (code === 'auth/popup-closed-by-user') {
+        setError('Google Sign-In window was closed before completing.');
+      } else {
+        setError(err?.message || 'Google Sign-In did not complete.');
+      }
     } finally {
       setLoading(false);
     }
