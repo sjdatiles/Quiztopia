@@ -21,7 +21,7 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
   return data as T;
 }
 
-export function useQuizSocket(sessionId: string | null) {
+export function useQuizSocket(sessionId: string | null, pollEndpoint?: string) {
   const [liveState, setLiveState] = useState<QuizSessionPublicState | null>(null);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -35,6 +35,7 @@ export function useQuizSocket(sessionId: string | null) {
 
     let cancelled = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
 
     const connect = () => {
       if (cancelled) return;
@@ -44,7 +45,10 @@ export function useQuizSocket(sessionId: string | null) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        if (!cancelled) setConnected(true);
+        if (!cancelled) {
+          attempts = 0;
+          setConnected(true);
+        }
       };
 
       ws.onmessage = (event) => {
@@ -61,7 +65,10 @@ export function useQuizSocket(sessionId: string | null) {
       ws.onclose = () => {
         if (cancelled) return;
         setConnected(false);
-        reconnectTimer = setTimeout(connect, 2000);
+        attempts += 1;
+        // Back off retries cleanly in environments without WebSockets (e.g., Vercel serverless)
+        const delay = attempts <= 2 ? 2500 : 12000;
+        reconnectTimer = setTimeout(connect, delay);
       };
 
       ws.onerror = () => {
@@ -77,6 +84,32 @@ export function useQuizSocket(sessionId: string | null) {
       wsRef.current?.close();
     };
   }, [sessionId]);
+
+  // Automatic HTTP polling fallback whenever WebSocket is unavailable (e.g. Vercel Serverless)
+  useEffect(() => {
+    if (!sessionId || !pollEndpoint || connected) return;
+
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await apiFetch<{ state: QuizSessionPublicState }>(pollEndpoint);
+        if (!cancelled && res?.state) {
+          setLiveState(res.state);
+        }
+      } catch {
+        // ignore transient poll failures
+      }
+    };
+
+    const intervalId = setInterval(() => {
+      void poll();
+    }, 1500);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [sessionId, pollEndpoint, connected]);
 
   return { liveState, setLiveState, connected };
 }

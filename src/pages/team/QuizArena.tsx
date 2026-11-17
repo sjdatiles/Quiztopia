@@ -47,7 +47,10 @@ export function QuizArena({
   const [clockOffsetMs, setClockOffsetMs] = useState(0);
   const [nowMs, setNowMs] = useState(Date.now());
 
-  const { liveState, setLiveState, connected } = useQuizSocket(sessionId);
+  const { liveState, setLiveState, connected } = useQuizSocket(
+    sessionId,
+    sessionId ? `/api/team/quiz/sessions/${sessionId}` : undefined
+  );
 
   // Sync initialSessionId prop if changed from Dashboard
   useEffect(() => {

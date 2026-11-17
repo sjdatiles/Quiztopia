@@ -1,37 +1,14 @@
 import http from 'node:http';
 import path from 'node:path';
 import express from 'express';
-import cookieParser from 'cookie-parser';
 import { WebSocketServer } from 'ws';
-import { attachSession, parseCookieHeader, SESSION_COOKIE_NAME, verifySessionToken } from './server/auth.ts';
-import { authRouter } from './server/routes/authRoutes.ts';
-import { teacherRouter } from './server/routes/teacherRoutes.ts';
-import { teamRouter } from './server/routes/teamRoutes.ts';
+import { createExpressApp } from './server/app.ts';
+import { parseCookieHeader, SESSION_COOKIE_NAME, verifySessionToken } from './server/auth.ts';
 import { attachQuizWebSocketServer, registerQuizClient } from './server/services/quizEngine.ts';
-import { ensureSeeded } from './server/seed.ts';
 
 export async function createServerApp(options?: { skipFrontend?: boolean }) {
-  const app = express();
+  const app = createExpressApp();
   const server = http.createServer(app);
-
-  app.use(express.json({ limit: '1mb' }));
-  app.use(cookieParser());
-  app.use(attachSession);
-
-  // Health probe
-  app.get('/api/health', async (_req, res) => {
-    try {
-      await ensureSeeded();
-      res.json({ ok: true, service: 'quiztopia' });
-    } catch (err) {
-      console.error('Health check failed:', err);
-      res.status(500).json({ ok: false });
-    }
-  });
-
-  app.use('/api/auth', authRouter);
-  app.use('/api/teacher', teacherRouter);
-  app.use('/api/team', teamRouter);
 
   // WebSocket Server for Live Classroom Quiz Sync on port 3000 (/ws/quiz)
   const wss = new WebSocketServer({ noServer: true });

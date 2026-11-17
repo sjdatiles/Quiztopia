@@ -25,7 +25,10 @@ export function TeacherLiveHost({
     { id: string; quizTitle: string; subject: string; pinCode: string; status: string }[]
   >([]);
   const [sessionId, setSessionId] = useState<string | null>(initialSessionId);
-  const { liveState, setLiveState, connected } = useQuizSocket(sessionId);
+  const { liveState, setLiveState, connected } = useQuizSocket(
+    sessionId,
+    sessionId ? `/api/teacher/sessions/${sessionId}` : undefined
+  );
   const [clockOffsetMs, setClockOffsetMs] = useState(0);
   const [nowMs, setNowMs] = useState(Date.now());
   const [busy, setBusy] = useState(false);

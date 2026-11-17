@@ -2,12 +2,17 @@ import crypto from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import type { AuthSessionUser } from '../shared/types.ts';
 
+import { firebaseConfig } from './firebase.ts';
+
 export const SESSION_COOKIE_NAME = 'quiztopia_session';
 
-const EPHEMERAL_FALLBACK_SECRET = crypto.randomBytes(32).toString('hex');
+const DETERMINISTIC_DEV_SECRET = crypto
+  .createHash('sha256')
+  .update(`quiztopia:${firebaseConfig.projectId}:${firebaseConfig.firestoreDatabaseId}`)
+  .digest('hex');
 
 function getSessionSecret(): string {
-  return process.env.SESSION_SECRET || EPHEMERAL_FALLBACK_SECRET;
+  return process.env.SESSION_SECRET || DETERMINISTIC_DEV_SECRET;
 }
 
 export function hashPassword(password: string): string {
@@ -86,18 +91,36 @@ export function parseCookieHeader(cookieHeader: string | undefined): Record<stri
 
 export function setSessionCookie(res: Response, user: AuthSessionUser): void {
   const token = signSessionToken(user);
-  const isProd = process.env.NODE_ENV === 'production';
+  const req = res.req;
+  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '');
+  const isHttps =
+    Boolean(req?.secure) ||
+    forwardedProto.includes('https') ||
+    process.env.NODE_ENV === 'production' ||
+    Boolean(process.env.VERCEL);
+
   res.cookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: isProd ? 'none' : 'lax',
-    secure: isProd,
+    sameSite: isHttps ? 'none' : 'lax',
+    secure: isHttps,
     maxAge: 1000 * 60 * 60 * 24 * 7,
     path: '/',
   });
 }
 
 export function clearSessionCookie(res: Response): void {
-  res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
+  const req = res.req;
+  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '');
+  const isHttps =
+    Boolean(req?.secure) ||
+    forwardedProto.includes('https') ||
+    process.env.NODE_ENV === 'production' ||
+    Boolean(process.env.VERCEL);
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    path: '/',
+    sameSite: isHttps ? 'none' : 'lax',
+    secure: isHttps,
+  });
 }
 
 export interface AuthedRequest extends Request {
