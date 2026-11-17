@@ -23,7 +23,9 @@ export async function createServerApp(options?: { skipFrontend?: boolean }) {
       }
 
       const cookies = parseCookieHeader(req.headers.cookie);
-      const user = verifySessionToken(cookies[SESSION_COOKIE_NAME]);
+      const tokenParam = reqUrl.searchParams.get('token') || undefined;
+      const user =
+        verifySessionToken(tokenParam) ?? verifySessionToken(cookies[SESSION_COOKIE_NAME]);
       const sessionId = reqUrl.searchParams.get('sessionId') || '';
 
       if (!user || !sessionId) {

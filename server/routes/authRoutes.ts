@@ -65,8 +65,8 @@ authRouter.post('/team/login', async (req, res) => {
       displayName: team.name,
     };
 
-    setSessionCookie(res, sessionUser);
-    res.json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.json({ user: sessionUser, token });
   } catch (err) {
     console.error('Team login error:', err);
     res.status(500).json({ error: 'Team login failed. Please try again.' });
@@ -103,8 +103,8 @@ authRouter.post('/teacher/login', async (req, res) => {
       email: teacher.email,
     };
 
-    setSessionCookie(res, sessionUser);
-    res.json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.json({ user: sessionUser, token });
   } catch (err) {
     console.error('Teacher login error:', err);
     res.status(500).json({ error: 'Teacher login failed. Please try again.' });
@@ -147,8 +147,8 @@ authRouter.post('/teacher/register', async (req, res) => {
       email,
     };
 
-    setSessionCookie(res, sessionUser);
-    res.status(201).json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.status(201).json({ user: sessionUser, token });
   } catch (err) {
     console.error('Teacher register error:', err);
     res.status(500).json({ error: 'Could not register teacher account.' });
@@ -187,8 +187,8 @@ authRouter.post('/teacher/firebase', async (req, res) => {
       email,
     };
 
-    setSessionCookie(res, sessionUser);
-    res.json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.json({ user: sessionUser, token });
   } catch (err) {
     console.error('Firebase teacher auth failed:', err);
     res.status(401).json({ error: 'Invalid or expired Google Sign-In token.' });

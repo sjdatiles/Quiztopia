@@ -50,17 +50,50 @@ const NAV_ITEMS: { id: TeamTab; label: string; icon: React.ComponentType<{ class
 export function TeamShell({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<TeamTab>('dashboard');
   const [dashData, setDashData] = useState<TeamDashboardData | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [joinSessionId, setJoinSessionId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const refreshDashboard = async () => {
-    const res = await apiFetch<TeamDashboardData>('/api/team/dashboard');
-    setDashData(res);
+    setLoadError(null);
+    try {
+      const res = await apiFetch<TeamDashboardData>('/api/team/dashboard');
+      setDashData(res);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Unable to load your team island.');
+    }
   };
 
   useEffect(() => {
     void refreshDashboard();
   }, []);
+
+  if (loadError && !dashData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-violet-50 p-6">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-violet-200 shadow-lg p-6 text-center space-y-4">
+          <h2 className="text-xl font-extrabold text-indigo-950">Could Not Load Team Island</h2>
+          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">{loadError}</p>
+          <div className="flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => void refreshDashboard()}
+              className="px-4 py-2.5 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-sm font-bold"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-bold"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!dashData) {
     return (

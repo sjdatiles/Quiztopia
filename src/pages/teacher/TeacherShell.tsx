@@ -191,6 +191,7 @@ export function TeacherShell({
               teacherName={user.displayName}
               onNavigate={(nextTab) => setTab(nextTab)}
               onOpenSession={openLiveSession}
+              onLogout={onLogout}
             />
           )}
           {tab === 'classes' && <TeacherClassesTeams />}

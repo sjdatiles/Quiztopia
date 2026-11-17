@@ -89,7 +89,7 @@ export function parseCookieHeader(cookieHeader: string | undefined): Record<stri
   return out;
 }
 
-export function setSessionCookie(res: Response, user: AuthSessionUser): void {
+export function setSessionCookie(res: Response, user: AuthSessionUser): string {
   const token = signSessionToken(user);
   const req = res.req;
   const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '');
@@ -106,6 +106,8 @@ export function setSessionCookie(res: Response, user: AuthSessionUser): void {
     maxAge: 1000 * 60 * 60 * 24 * 7,
     path: '/',
   });
+
+  return token;
 }
 
 export function clearSessionCookie(res: Response): void {
@@ -128,8 +130,14 @@ export interface AuthedRequest extends Request {
 }
 
 export function attachSession(req: AuthedRequest, _res: Response, next: NextFunction): void {
-  const token = req.cookies?.[SESSION_COOKIE_NAME];
-  req.sessionUser = verifySessionToken(token) ?? undefined;
+  const authHeader = req.headers?.authorization;
+  const bearerToken =
+    typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')
+      ? authHeader.slice(7).trim()
+      : undefined;
+  const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
+  req.sessionUser =
+    verifySessionToken(bearerToken) ?? verifySessionToken(cookieToken) ?? undefined;
   next();
 }
 

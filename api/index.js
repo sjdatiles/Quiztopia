@@ -12,6 +12,20 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
+// firebase-applet-config.json
+var firebase_applet_config_default = {
+  projectId: "gen-lang-client-0088409992",
+  appId: "1:463425881782:web:a58dae9ed76bc341b80817",
+  apiKey: "AIzaSyD3n38epLSIgcPHhsnkPb57w388Ju2-sUg",
+  authDomain: "gen-lang-client-0088409992.firebaseapp.com",
+  firestoreDatabaseId: "ai-studio-64b4d4c0-2a89-4984-92cd-0aa06cf48b9f",
+  storageBucket: "gen-lang-client-0088409992.firebasestorage.app",
+  messagingSenderId: "463425881782",
+  measurementId: "",
+  oAuthClientId: "463425881782-1ri4ma442s5lf6mmjmp6k67d26ikmcsq.apps.googleusercontent.com",
+  recaptchaSiteKey: ""
+};
+
 // server/localDb.ts
 import fs from "node:fs";
 import path from "node:path";
@@ -399,41 +413,83 @@ function loadFirebaseConfig() {
     path2.resolve(import.meta.dirname ?? process.cwd(), "..", "firebase-applet-config.json")
   ];
   for (const p of candidates) {
-    if (fs2.existsSync(p)) {
-      return JSON.parse(fs2.readFileSync(p, "utf-8"));
+    try {
+      if (fs2.existsSync(p)) {
+        return JSON.parse(fs2.readFileSync(p, "utf-8"));
+      }
+    } catch {
     }
   }
-  throw new Error("firebase-applet-config.json not found.");
+  return firebase_applet_config_default;
 }
 var firebaseConfig = loadFirebaseConfig();
 function parseServiceAccount() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!raw) return null;
+  if (!raw) return { account: null, error: null };
   try {
     let parsed = JSON.parse(raw);
     if (typeof parsed === "string") {
       parsed = JSON.parse(parsed);
     }
-    if (parsed && typeof parsed.private_key === "string") {
+    if (!parsed || typeof parsed !== "object") {
+      return { account: null, error: "FIREBASE_SERVICE_ACCOUNT_JSON must be a JSON object." };
+    }
+    if (typeof parsed.private_key === "string") {
       parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
     }
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
+    if (typeof parsed.private_key !== "string" || typeof parsed.client_email !== "string") {
+      return {
+        account: null,
+        error: "FIREBASE_SERVICE_ACCOUNT_JSON is missing required client_email or private_key fields."
+      };
+    }
+    return { account: parsed, error: null };
+  } catch (err) {
+    return {
+      account: null,
+      error: `Invalid FIREBASE_SERVICE_ACCOUNT_JSON: ${err?.message || "JSON parse error"}`
+    };
   }
 }
-var serviceAccount = parseServiceAccount();
-var app = getApps().length ? getApps()[0] : initializeApp(
-  serviceAccount ? {
-    credential: cert(serviceAccount),
-    projectId: firebaseConfig.projectId
-  } : {
-    projectId: firebaseConfig.projectId
+var { account: serviceAccount, error: serviceAccountParseError } = parseServiceAccount();
+var firebaseInitError = serviceAccountParseError;
+var app;
+var hasCredential = false;
+try {
+  if (getApps().length > 0) {
+    app = getApps()[0];
+    hasCredential = Boolean(serviceAccount || process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  } else if (serviceAccount) {
+    app = initializeApp({
+      credential: cert(serviceAccount),
+      projectId: firebaseConfig.projectId
+    });
+    hasCredential = true;
+  } else {
+    app = initializeApp({
+      projectId: firebaseConfig.projectId
+    });
+    hasCredential = Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   }
-);
+} catch (err) {
+  firebaseInitError = err?.message || "Firebase Admin initialization failed.";
+  console.error("Firebase Admin initialization error:", firebaseInitError);
+  app = getApps().length ? getApps()[0] : initializeApp({ projectId: firebaseConfig.projectId }, "quiztopia-fallback");
+  hasCredential = false;
+}
 var adminAuth = getAuth(app);
-var useRemoteFirestore = Boolean(serviceAccount || process.env.GOOGLE_APPLICATION_CREDENTIALS);
-var adminDb = useRemoteFirestore ? getFirestore(app, firebaseConfig.firestoreDatabaseId) : new LocalFirestoreDb();
+var remoteDb = null;
+if (hasCredential) {
+  try {
+    remoteDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  } catch (err) {
+    firebaseInitError = err?.message || "Cloud Firestore client initialization failed.";
+    console.error("Cloud Firestore initialization error:", firebaseInitError);
+    remoteDb = null;
+  }
+}
+var useRemoteFirestore = Boolean(remoteDb);
+var adminDb = remoteDb ?? new LocalFirestoreDb();
 
 // server/auth.ts
 var SESSION_COOKIE_NAME = "quiztopia_session";
@@ -497,6 +553,7 @@ function setSessionCookie(res, user) {
     maxAge: 1e3 * 60 * 60 * 24 * 7,
     path: "/"
   });
+  return token;
 }
 function clearSessionCookie(res) {
   const req = res.req;
@@ -509,8 +566,10 @@ function clearSessionCookie(res) {
   });
 }
 function attachSession(req, _res, next) {
-  const token = req.cookies?.[SESSION_COOKIE_NAME];
-  req.sessionUser = verifySessionToken(token) ?? void 0;
+  const authHeader = req.headers?.authorization;
+  const bearerToken = typeof authHeader === "string" && authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : void 0;
+  const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
+  req.sessionUser = verifySessionToken(bearerToken) ?? verifySessionToken(cookieToken) ?? void 0;
   next();
 }
 function requireTeacher(req, res, next) {
@@ -870,17 +929,19 @@ async function runSeed() {
   const markerSnap = await markerRef.get();
   if (markerSnap.exists) return;
   const nowIso = (/* @__PURE__ */ new Date()).toISOString();
-  await adminDb.collection("test").doc("connection").set({ ok: true, updatedAt: nowIso }, { merge: true });
-  await adminDb.collection("config").doc("game_rules").set(DEFAULT_GAME_RULES, { merge: true });
+  const batch = adminDb.batch();
+  batch.set(adminDb.collection("test").doc("connection"), { ok: true, updatedAt: nowIso }, { merge: true });
+  batch.set(adminDb.collection("config").doc("game_rules"), DEFAULT_GAME_RULES, { merge: true });
   const creatureIds = [];
   for (const c of SEED_CREATURES) {
     const id = `creature_${c.artKey}`;
     creatureIds.push(id);
-    await adminDb.collection("creatures").doc(id).set({ id, ...c }, { merge: true });
+    batch.set(adminDb.collection("creatures").doc(id), { id, ...c }, { merge: true });
   }
   for (const item of SEED_ITEMS) {
     const id = `item_${item.slug}`;
-    await adminDb.collection("catalog_items").doc(id).set(
+    batch.set(
+      adminDb.collection("catalog_items").doc(id),
       {
         id,
         category: item.category,
@@ -896,7 +957,8 @@ async function runSeed() {
   }
   for (const ach of SEED_ACHIEVEMENTS) {
     const id = `ach_${ach.slug}`;
-    await adminDb.collection("achievements").doc(id).set(
+    batch.set(
+      adminDb.collection("achievements").doc(id),
       {
         id,
         code: ach.code,
@@ -911,7 +973,8 @@ async function runSeed() {
     );
   }
   const teacherId = "teacher_rivera";
-  await adminDb.collection("teachers").doc(teacherId).set(
+  batch.set(
+    adminDb.collection("teachers").doc(teacherId),
     {
       uid: teacherId,
       email: "teacher@quiztopia.edu",
@@ -923,7 +986,8 @@ async function runSeed() {
     { merge: true }
   );
   const classId = "class_grade4_explorers";
-  await adminDb.collection("classes").doc(classId).set(
+  batch.set(
+    adminDb.collection("classes").doc(classId),
     {
       id: classId,
       teacherId,
@@ -937,7 +1001,8 @@ async function runSeed() {
   );
   for (const termNum of [1, 2, 3]) {
     const termId = `${classId}_term_${termNum}`;
-    await adminDb.collection("academic_terms").doc(termId).set(
+    batch.set(
+      adminDb.collection("academic_terms").doc(termId),
       {
         id: termId,
         classId,
@@ -1021,7 +1086,8 @@ async function runSeed() {
       nickname
     }));
     const captain = memberObjects[0];
-    await adminDb.collection("teams").doc(t.id).set(
+    batch.set(
+      adminDb.collection("teams").doc(t.id),
       {
         id: t.id,
         classId,
@@ -1036,8 +1102,9 @@ async function runSeed() {
       },
       { merge: true }
     );
-    await adminDb.collection("team_avatars").doc(t.id).set(t.avatar, { merge: true });
-    await adminDb.collection("team_wallets").doc(t.id).set(
+    batch.set(adminDb.collection("team_avatars").doc(t.id), t.avatar, { merge: true });
+    batch.set(
+      adminDb.collection("team_wallets").doc(t.id),
       {
         teamId: t.id,
         balance: t.coins,
@@ -1045,7 +1112,8 @@ async function runSeed() {
       },
       { merge: true }
     );
-    await adminDb.collection("coin_transactions").doc(`seed_tx_${t.id}`).set(
+    batch.set(
+      adminDb.collection("coin_transactions").doc(`seed_tx_${t.id}`),
       {
         id: `seed_tx_${t.id}`,
         teamId: t.id,
@@ -1058,7 +1126,8 @@ async function runSeed() {
       { merge: true }
     );
     const starterInvId = `seed_inv_${t.id}_castle`;
-    await adminDb.collection("team_inventory_items").doc(starterInvId).set(
+    batch.set(
+      adminDb.collection("team_inventory_items").doc(starterInvId),
       {
         id: starterInvId,
         teamId: t.id,
@@ -1070,7 +1139,8 @@ async function runSeed() {
     let creaturePower = 0;
     for (const cid of t.starterCreatures) {
       const tcId = `seed_tc_${t.id}_${cid}`;
-      await adminDb.collection("team_creatures").doc(tcId).set(
+      batch.set(
+        adminDb.collection("team_creatures").doc(tcId),
         {
           id: tcId,
           teamId: t.id,
@@ -1083,7 +1153,8 @@ async function runSeed() {
       creaturePower += found?.powerValue ?? 0;
     }
     const totalPower = 300 + creaturePower;
-    await adminDb.collection("team_islands").doc(t.id).set(
+    batch.set(
+      adminDb.collection("team_islands").doc(t.id),
       {
         teamId: t.id,
         theme: "emerald_isle",
@@ -1107,7 +1178,8 @@ async function runSeed() {
       { merge: true }
     );
   }
-  await adminDb.collection("quizzes").doc("quiz_solar_system").set(
+  batch.set(
+    adminDb.collection("quizzes").doc("quiz_solar_system"),
     {
       id: "quiz_solar_system",
       teacherId,
@@ -1181,7 +1253,8 @@ async function runSeed() {
     },
     { merge: true }
   );
-  await adminDb.collection("quizzes").doc("quiz_fractions_quest").set(
+  batch.set(
+    adminDb.collection("quizzes").doc("quiz_fractions_quest"),
     {
       id: "quiz_fractions_quest",
       teacherId,
@@ -1227,7 +1300,8 @@ async function runSeed() {
     },
     { merge: true }
   );
-  await markerRef.set({ seededAt: nowIso, version: 1 });
+  batch.set(markerRef, { seededAt: nowIso, version: 1 });
+  await batch.commit();
 }
 async function ensureSeeded() {
   if (!seedPromise) {
@@ -1286,8 +1360,8 @@ authRouter.post("/team/login", async (req, res) => {
       teacherId: team.teacherId,
       displayName: team.name
     };
-    setSessionCookie(res, sessionUser);
-    res.json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.json({ user: sessionUser, token });
   } catch (err) {
     console.error("Team login error:", err);
     res.status(500).json({ error: "Team login failed. Please try again." });
@@ -1318,8 +1392,8 @@ authRouter.post("/teacher/login", async (req, res) => {
       displayName: teacher.displayName,
       email: teacher.email
     };
-    setSessionCookie(res, sessionUser);
-    res.json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.json({ user: sessionUser, token });
   } catch (err) {
     console.error("Teacher login error:", err);
     res.status(500).json({ error: "Teacher login failed. Please try again." });
@@ -1356,8 +1430,8 @@ authRouter.post("/teacher/register", async (req, res) => {
       displayName,
       email
     };
-    setSessionCookie(res, sessionUser);
-    res.status(201).json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.status(201).json({ user: sessionUser, token });
   } catch (err) {
     console.error("Teacher register error:", err);
     res.status(500).json({ error: "Could not register teacher account." });
@@ -1391,8 +1465,8 @@ authRouter.post("/teacher/firebase", async (req, res) => {
       displayName,
       email
     };
-    setSessionCookie(res, sessionUser);
-    res.json({ user: sessionUser });
+    const token = setSessionCookie(res, sessionUser);
+    res.json({ user: sessionUser, token });
   } catch (err) {
     console.error("Firebase teacher auth failed:", err);
     res.status(401).json({ error: "Invalid or expired Google Sign-In token." });
@@ -3631,9 +3705,19 @@ function createExpressApp() {
   const app3 = express();
   app3.set("trust proxy", 1);
   app3.use((req, res, next) => {
-    if (req.body !== void 0 && typeof req.body === "object") {
-      next();
-      return;
+    if (req.body !== void 0) {
+      if (typeof req.body === "string") {
+        try {
+          req.body = req.body.trim() ? JSON.parse(req.body) : {};
+        } catch {
+          res.status(400).json({ error: "Invalid JSON request body." });
+          return;
+        }
+      }
+      if (req.body !== null && typeof req.body === "object") {
+        next();
+        return;
+      }
     }
     express.json({ limit: "1mb" })(req, res, next);
   });
@@ -3642,10 +3726,18 @@ function createExpressApp() {
   app3.get("/api/health", async (_req, res) => {
     try {
       await ensureSeeded();
-      res.json({ ok: true, service: "quiztopia" });
+      res.json({
+        ok: true,
+        service: "quiztopia",
+        db: useRemoteFirestore ? "firestore" : "local",
+        ...firebaseInitError ? { warning: firebaseInitError } : {}
+      });
     } catch (err) {
       console.error("Health check failed:", err);
-      res.status(500).json({ ok: false, error: "Database initialization failed." });
+      res.status(500).json({
+        ok: false,
+        error: err?.message || "Database initialization failed."
+      });
     }
   });
   app3.use("/api/auth", authRouter);
@@ -3654,26 +3746,41 @@ function createExpressApp() {
   app3.use("/api", (req, res) => {
     res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
   });
+  app3.use((err, _req, res, _next) => {
+    console.error("Unhandled Express error:", err);
+    if (res.headersSent) return;
+    const status = typeof err?.status === "number" && err.status >= 400 ? err.status : 500;
+    res.status(status).json({ error: err?.message || "Internal server error." });
+  });
   return app3;
 }
 
 // server/vercel.ts
 var app2 = createExpressApp();
 function handler(req, res) {
-  if (req.url) {
-    try {
-      const parsed = new URL(req.url, "http://localhost");
-      const rewrittenPath = parsed.searchParams.get("__path");
-      if (rewrittenPath !== null) {
-        parsed.searchParams.delete("__path");
-        const qs = parsed.searchParams.toString();
-        const cleanPath = rewrittenPath.replace(/^\/+/, "");
-        req.url = `/api/${cleanPath}${qs ? `?${qs}` : ""}`;
+  try {
+    if (req.url) {
+      try {
+        const parsed = new URL(req.url, "http://localhost");
+        const rewrittenPath = parsed.searchParams.get("__path");
+        if (rewrittenPath !== null) {
+          parsed.searchParams.delete("__path");
+          const qs = parsed.searchParams.toString();
+          const cleanPath = rewrittenPath.replace(/^\/+/, "");
+          req.url = `/api/${cleanPath}${qs ? `?${qs}` : ""}`;
+        }
+      } catch {
       }
-    } catch {
+    }
+    return app2(req, res);
+  } catch (err) {
+    console.error("Vercel handler fatal error:", err);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.end(JSON.stringify({ error: err?.message || "Serverless handler error." }));
     }
   }
-  return app2(req, res);
 }
 export {
   handler as default

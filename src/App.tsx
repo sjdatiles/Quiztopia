@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import type { AuthSessionUser } from '../shared/types.ts';
-import { apiFetch } from './lib/api.ts';
+import { apiFetch, clearAuthToken } from './lib/api.ts';
 import { testConnection } from './lib/firebase.ts';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { WelcomePage } from './pages/WelcomePage.tsx';
@@ -22,6 +22,7 @@ export default function App() {
     void testConnection();
     apiFetch<{ user: AuthSessionUser | null }>('/api/auth/me')
       .then((res) => {
+        if (!res.user) clearAuthToken();
         setUser(res.user);
       })
       .catch(() => {
@@ -38,6 +39,7 @@ export default function App() {
     } catch {
       // Clear local session state regardless of network hiccup
     }
+    clearAuthToken();
     setUser(null);
     setShowLogin(false);
   };

@@ -1,14 +1,63 @@
 import { useEffect, useRef, useState } from 'react';
 import type { QuizSessionPublicState } from '../../shared/types.ts';
 
+const AUTH_TOKEN_KEY = 'quiztopia_auth_token';
+let memoryAuthToken: string | null = null;
+
+export function getAuthToken(): string | null {
+  if (memoryAuthToken) return memoryAuthToken;
+  try {
+    const ss = window.sessionStorage?.getItem(AUTH_TOKEN_KEY);
+    if (ss) {
+      memoryAuthToken = ss;
+      return ss;
+    }
+  } catch {
+    // storage may be restricted in sandboxed contexts
+  }
+  try {
+    const ls = window.localStorage?.getItem(AUTH_TOKEN_KEY);
+    if (ls) {
+      memoryAuthToken = ls;
+      return ls;
+    }
+  } catch {
+    // ignore storage restriction
+  }
+  return null;
+}
+
+export function setAuthToken(token: string | null | undefined): void {
+  const clean = token?.trim() || null;
+  memoryAuthToken = clean;
+  try {
+    if (clean) window.sessionStorage?.setItem(AUTH_TOKEN_KEY, clean);
+    else window.sessionStorage?.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+  try {
+    if (clean) window.localStorage?.setItem(AUTH_TOKEN_KEY, clean);
+    else window.localStorage?.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearAuthToken(): void {
+  setAuthToken(null);
+}
+
 export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
   const res = await fetch(url, {
     credentials: 'include',
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers || {}),
     },
-    ...options,
   });
 
   const contentType = res.headers.get('content-type') || '';
@@ -40,7 +89,9 @@ export function useQuizSocket(sessionId: string | null, pollEndpoint?: string) {
     const connect = () => {
       if (cancelled) return;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const url = `${protocol}//${window.location.host}/ws/quiz?sessionId=${encodeURIComponent(sessionId)}`;
+      const token = getAuthToken();
+      const tokenQs = token ? `&token=${encodeURIComponent(token)}` : '';
+      const url = `${protocol}//${window.location.host}/ws/quiz?sessionId=${encodeURIComponent(sessionId)}${tokenQs}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
 

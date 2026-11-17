@@ -26,16 +26,56 @@ export function TeacherDashboard({
   teacherName,
   onNavigate,
   onOpenSession,
+  onLogout,
 }: {
   teacherName: string;
   onNavigate: (tab: 'dashboard' | 'classes' | 'quizzes' | 'live' | 'shop' | 'reports') => void;
   onOpenSession: (sessionId: string) => void;
+  onLogout?: () => void;
 }) {
   const [data, setData] = useState<OverviewResponse | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadOverview = async () => {
+    setLoadError(null);
+    try {
+      const res = await apiFetch<OverviewResponse>('/api/teacher/overview');
+      setData(res);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Unable to load Teacher Dashboard.');
+    }
+  };
 
   useEffect(() => {
-    apiFetch<OverviewResponse>('/api/teacher/overview').then(setData);
+    void loadOverview();
   }, []);
+
+  if (loadError && !data) {
+    return (
+      <div className="p-8 text-center bg-white rounded-3xl border border-violet-200 space-y-4 max-w-lg mx-auto mt-8">
+        <h2 className="text-lg font-extrabold text-indigo-950">Could Not Load Teacher Dashboard</h2>
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">{loadError}</p>
+        <div className="flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => void loadOverview()}
+            className="px-4 py-2 rounded-xl bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold"
+          >
+            Retry
+          </button>
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold"
+            >
+              Sign Out
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (!data) {
     return (

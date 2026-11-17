@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithPopup } from 'firebase/auth';
 import { ArrowLeft, Crown, Eye, EyeOff, Lock, Mail, Sparkles, User } from 'lucide-react';
-import { apiFetch } from '../lib/api.ts';
+import { apiFetch, setAuthToken } from '../lib/api.ts';
 import { auth, googleProvider } from '../lib/firebase.ts';
 import type { AuthSessionUser } from '../../shared/types.ts';
 import { HERO_ISLAND_IMG } from '../components/FantasyArt.tsx';
@@ -32,22 +32,25 @@ export function LoginPage({
     setLoading(true);
     try {
       if (mode === 'team') {
-        const res = await apiFetch<{ user: AuthSessionUser }>('/api/auth/team/login', {
+        const res = await apiFetch<{ user: AuthSessionUser; token?: string }>('/api/auth/team/login', {
           method: 'POST',
           body: JSON.stringify({ username, password }),
         });
+        if (res.token) setAuthToken(res.token);
         onSuccess(res.user);
       } else if (teacherRegister) {
-        const res = await apiFetch<{ user: AuthSessionUser }>('/api/auth/teacher/register', {
+        const res = await apiFetch<{ user: AuthSessionUser; token?: string }>('/api/auth/teacher/register', {
           method: 'POST',
           body: JSON.stringify({ email, displayName, password }),
         });
+        if (res.token) setAuthToken(res.token);
         onSuccess(res.user);
       } else {
-        const res = await apiFetch<{ user: AuthSessionUser }>('/api/auth/teacher/login', {
+        const res = await apiFetch<{ user: AuthSessionUser; token?: string }>('/api/auth/teacher/login', {
           method: 'POST',
           body: JSON.stringify({ email, password }),
         });
+        if (res.token) setAuthToken(res.token);
         onSuccess(res.user);
       }
     } catch (err: any) {
@@ -63,10 +66,11 @@ export function LoginPage({
     try {
       const cred = await signInWithPopup(auth, googleProvider);
       const idToken = await cred.user.getIdToken();
-      const res = await apiFetch<{ user: AuthSessionUser }>('/api/auth/teacher/firebase', {
+      const res = await apiFetch<{ user: AuthSessionUser; token?: string }>('/api/auth/teacher/firebase', {
         method: 'POST',
         body: JSON.stringify({ idToken }),
       });
+      if (res.token) setAuthToken(res.token);
       onSuccess(res.user);
     } catch (err: any) {
       const code = err?.code || '';
