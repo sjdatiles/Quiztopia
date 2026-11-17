@@ -1,0 +1,6 @@
+{
+  "name": "Quiztopia",
+  "description": "Learn. Compete. Build Your Island. A collaborative elementary classroom quiz competition and fantasy island-building game.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

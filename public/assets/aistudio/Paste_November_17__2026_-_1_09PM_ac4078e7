@@ -1,0 +1,1432 @@
+# QUIZTOPIA — MASTER PRODUCT DEVELOPMENT PROMPT
+
+## 1. YOUR ROLE: ACT AS THE ENTIRE SOFTWARE DEVELOPMENT TEAM
+
+You are now the **Senior Software Architect, Lead Full-Stack Developer, UI/UX Designer, Database Engineer, Backend Developer, Frontend Developer, QA Engineer, Security Engineer, and Technical Project Manager** responsible for developing a complete web-based educational game called **Quiztopia**.
+
+You are not simply assisting me with code snippets. You are responsible for planning, designing, developing, testing, debugging, and preparing the entire application for deployment.
+
+I will act as the Product Owner. I will provide the product vision, approve important product decisions, review the interface, and give feedback. You are expected to handle the technical execution and recommend improvements when necessary.
+
+### Your responsibilities
+
+You must:
+
+1. Design the complete software architecture.
+2. Establish the database structure and relationships.
+3. Develop the frontend and backend.
+4. Create functional authentication and authorization.
+5. Implement the real-time classroom quiz system.
+6. Develop the island-building and fantasy creature economy.
+7. Develop the teacher administration portal.
+8. Implement the academic-term competition system.
+9. Design a consistent, responsive, child-friendly interface.
+10. Perform testing, identify bugs, and resolve them.
+11. Maintain clean, organized, reusable, and scalable code.
+12. Prepare the application for production deployment.
+
+**Important working principles:**
+
+- Do not simply generate a visual prototype. Build a functional application.
+- Do not create buttons that look functional but do nothing.
+- Do not use hardcoded sample data as a substitute for actual database functionality.
+- Do not skip backend validation or security because something works on the frontend.
+- Do not implement everything in one enormous, untested code change.
+- Do not unnecessarily complicate the architecture.
+- Make sensible technical decisions independently when they do not change the agreed product requirements.
+- Explain important architectural decisions in language that a non-expert Product Owner can understand.
+- If a requirement is genuinely ambiguous and affects the product, ask me before implementing it.
+- Keep a development log and document completed features, outstanding tasks, and known issues.
+
+Your objective is to deliver a complete, reliable, maintainable, and deployable application.
+
+---
+
+# 2. PRODUCT OVERVIEW
+
+## Product Name: QUIZTOPIA
+
+**Tagline: Learn. Compete. Build Your Island.**
+
+Quiztopia is a browser-based educational game that combines a live classroom quiz competition with a fantasy island-building and creature-collecting experience.
+
+It is designed for elementary students who participate in classroom learning activities through collaborative teams.
+
+The platform transforms classroom quizzes into a fantasy adventure where students work together, earn rewards, collect magical creatures, and develop their own islands.
+
+### The central gameplay loop
+
+1. The teacher creates a classroom and organizes students into teams.
+2. Each team receives a shared account.
+3. Teams participate in live classroom quiz competitions.
+4. Team members discuss each question before their captain submits their answer.
+5. Teams earn points based on their quiz performance and other classroom activities.
+6. Earned points are converted into virtual coins.
+7. Teams use their shared coins to acquire fantasy creatures and island items.
+8. Their island develops and gains power.
+9. At the end of each academic term, teams compete for the strongest island.
+10. A new academic-term season begins while preserving appropriate long-term progress.
+
+The platform should encourage:
+
+- Collaboration
+- Critical thinking
+- Knowledge retention
+- Healthy competition
+- Participation
+- Creativity
+- Teamwork
+- Consistent learning progress
+
+The game must not exclusively reward students who consistently obtain the highest quiz scores. Include opportunities for teamwork, participation, challenges, and classroom achievements.
+
+---
+
+# 3. NON-NEGOTIABLE PRODUCT REQUIREMENTS
+
+These requirements are confirmed product decisions. Do not change them without my approval.
+
+## 3.1 Team-Based Account System
+
+Quiztopia uses shared team accounts, NOT individual student accounts.
+
+For example:
+
+- 30 students
+- 3 students per team
+- 10 teams
+- 10 team accounts
+
+Each team must have between 2 and 4 members.
+
+The teacher is responsible for creating the class and its teams.
+
+During team creation, the teacher must be able to enter:
+
+- Team name
+- Team members' first names or nicknames
+- Team captain
+- Team username
+- Team password or generated credentials
+
+The system should generate or securely assign the team's login credentials.
+
+Students do not independently register accounts.
+
+There must be two primary login types:
+
+1. Team Login
+2. Teacher Login
+
+Team credentials must authenticate the shared team account, not an individual member.
+
+## 3.2 Team Identity and Privacy
+
+Each team has one shared identity.
+
+The following information belongs to the team:
+
+- Team name
+- Team members
+- Shared avatar
+- Shared island
+- Shared coin wallet
+- Shared fantasy creature collection
+- Shared achievements
+- Shared quiz statistics
+- Shared island power
+
+The island must display all team members' first names or nicknames.
+
+Example:
+
+**Star Guardians**
+
+Alex • Mia • Kai • Luna
+
+Never display students' surnames or full names on publicly visible island interfaces, leaderboards, or other student-facing screens.
+
+Do not collect unnecessary personal information.
+
+## 3.3 One Shared Team Avatar
+
+Each team has exactly ONE avatar.
+
+The team collaboratively creates and customizes this avatar.
+
+The avatar represents the entire team throughout the application, including:
+
+- Team dashboard
+- Quiz lobby
+- Live quiz
+- Quiz results
+- Leaderboards
+- Team island
+- Team profile
+
+Do not create individual avatars for individual team members.
+
+## 3.4 One Device Per Team
+
+Each team uses one device during classroom competitions.
+
+A designated team captain operates the device.
+
+The captain is responsible for:
+
+- Logging into the team account
+- Joining the quiz
+- Viewing the questions
+- Selecting answers
+- Submitting answers
+
+However, the entire team must discuss and agree on each answer.
+
+The application must enforce:
+
+- Only one active team submission per question.
+- An answer cannot be changed after submission.
+- Duplicate submissions must be rejected.
+- A team cannot submit after the timer expires.
+- A team cannot submit an answer for a question that is not currently active.
+- The backend, not merely the frontend, must enforce these rules.
+
+The teacher must be able to designate or change the captain.
+
+Captain rotation may be encouraged between quiz sessions, but it should not require separate student accounts.
+
+## 3.5 Shared Resources
+
+Each team shares:
+
+| Resource | Ownership |
+|---|---|
+| Avatar | Team |
+| Island | Team |
+| Coins | Team |
+| Fantasy creatures | Team |
+| Buildings | Team |
+| Decorations | Team |
+| Achievements | Team |
+| Island power | Team |
+| Quiz results | Team |
+
+All transactions and rewards must be associated with the correct team.
+
+## 3.6 No Daily Login Rewards
+
+Do not implement daily login rewards, daily streak bonuses, or mechanics that require students to log in every day.
+
+Students participate in this class approximately once per week.
+
+Instead, rewards should come from:
+
+- Weekly classroom activities
+- Quiz competitions
+- Special challenges
+- Team achievements
+- Participation rewards
+- Class-wide milestones
+- Teacher-created activities
+
+Progress must persist between weekly classroom sessions.
+
+## 3.7 Academic-Term Seasons
+
+The academic year has THREE terms.
+
+Each term represents a separate competitive season:
+
+- Term 1
+- Term 2
+- Term 3
+
+Each term has its own rankings, competitions, and island-power standings.
+
+At the end of each term:
+
+- Finalize the term rankings.
+- Recognize the winning teams.
+- Record the term champions.
+- Archive the season results.
+- Reset term-specific competitive island power and rankings for the next season.
+
+Preserve lifetime progress, including:
+
+- Collected fantasy creatures
+- Permanent achievements
+- Historical quiz results
+- Previous term championships
+- Lifetime team statistics
+
+The system should also support an overall Academic Year Champion.
+
+The teacher must be able to configure the academic year and active term.
+
+---
+
+# 4. USER ROLES AND PERMISSIONS
+
+Implement two primary user roles.
+
+## 4.1 Teacher
+
+The teacher manages the classroom and all game activities.
+
+Teacher permissions:
+
+- Create and manage classes.
+- Create and manage teams.
+- Add and edit team members' first names or nicknames.
+- Generate team login credentials.
+- Reset team passwords.
+- Designate team captains.
+- Create and manage quizzes.
+- Create and edit quiz questions.
+- Configure quiz duration.
+- Host live quiz competitions.
+- Start, pause when appropriate, and end quizzes.
+- Monitor team participation.
+- View team scores.
+- View quiz results.
+- Manage classroom rewards.
+- Manage the fantasy shop.
+- Configure creatures and their prices.
+- Manage academic terms.
+- View rankings and reports.
+- Manage season results.
+- Review classroom progress.
+
+Teacher accounts must have protected access to administrative functionality.
+
+## 4.2 Team
+
+Teams access the student-facing portion of the application.
+
+Team permissions:
+
+- Log in using shared team credentials.
+- View their team dashboard.
+- Customize their shared avatar.
+- View their team members.
+- View their shared island.
+- Customize their island using available items.
+- Browse and purchase fantasy creatures.
+- View their shared creature collection.
+- View shared coins.
+- Join classroom quizzes.
+- Submit one answer per question.
+- View quiz results.
+- View classroom leaderboards.
+- View team achievements.
+- Track their island's development.
+
+Teams must not access teacher administration functions.
+
+---
+
+# 5. GAME DESIGN AND CORE FEATURES
+
+## 5.1 Team Dashboard
+
+The dashboard is the main screen after a team logs in.
+
+Display:
+
+- Team name
+- Shared team avatar
+- Team members' first names or nicknames
+- Current academic term
+- Current island
+- Team coins
+- Island power
+- Current season rank
+- Recent quiz results
+- Recent achievements
+- Upcoming classroom quiz, if scheduled
+- Quick navigation
+
+Suggested navigation:
+
+- Dashboard
+- Our Island
+- Quiz Arena
+- Pet Shop
+- Collection
+- Leaderboard
+- Achievements
+- Settings
+
+Keep the dashboard visually engaging but easy for elementary students to understand.
+
+## 5.2 Avatar Creator
+
+Create a collaborative team avatar customization interface.
+
+Possible customization categories:
+
+- Character type
+- Hair
+- Face
+- Clothing
+- Accessories
+- Colors
+
+The customization system should be modular so new options can be added later.
+
+The team must have only one saved avatar.
+
+## 5.3 Island System
+
+Each team owns one persistent fantasy island.
+
+The island should be visually represented as an explorable, customizable environment.
+
+Possible island elements:
+
+- Central castle
+- Trees
+- Plants
+- Rivers
+- Waterfalls
+- Magical structures
+- Creature habitats
+- Decorative objects
+- Special buildings
+- Collectible landmarks
+
+Teams should be able to customize their island by purchasing and placing available objects.
+
+Implement a manageable initial customization system rather than building a complex 3D game.
+
+A 2D illustrated island with interactive placement and customization is sufficient for the first release.
+
+The island must show:
+
+- Team name
+- All team members' first names or nicknames
+- Shared team avatar
+- Island power
+- Owned buildings and decorations
+- Collected creatures, where appropriate
+
+## 5.4 Island Power
+
+Island power represents the team's development and accomplishments.
+
+Use a configurable calculation that can incorporate:
+
+- Fantasy creature power
+- Building power
+- Achievement power
+- Other teacher-approved contributions
+
+A suggested initial formula is:
+
+Island Power = Creature Power + Building Power + Achievement Power
+
+Avoid hardcoding these values throughout the application.
+
+Store the relevant power values in the database and make the calculation maintainable.
+
+The teacher should be able to configure the scoring rules when appropriate.
+
+## 5.5 Fantasy Creature Collection
+
+Quiztopia must use original fantasy creatures as collectible pets.
+
+Do not use ordinary real-world animals as the primary creature collection.
+
+Examples of possible creatures:
+
+| Creature | Element |
+|---|---|
+| Lumibun | Light |
+| Sproutling | Earth |
+| Crystal Wisp | Cosmic |
+| Emberling | Fire |
+| Moonfox | Darkness |
+| Cloud Drake | Wind |
+| Star Unicorn | Light |
+| Celestial Phoenix | Fire |
+| Astral Dragon | Cosmic |
+
+Possible elements:
+
+- Fire
+- Water
+- Earth
+- Wind
+- Light
+- Darkness
+- Cosmic
+
+Possible rarity levels:
+
+- Common
+- Uncommon
+- Rare
+- Epic
+- Legendary
+- Mythical
+
+Each creature should have:
+
+- Name
+- Original illustration or image
+- Description
+- Element
+- Rarity
+- Power value
+- Purchase price
+- Collection status
+
+These are initial design examples. Build the creature catalog so additional creatures can be added through teacher administration.
+
+## 5.6 Pet Shop
+
+Teams can purchase creatures using shared team coins.
+
+The shop must include:
+
+- Creature catalog
+- Creature illustrations
+- Element
+- Rarity
+- Power
+- Price
+- Purchase button
+
+Before purchasing, show a confirmation dialog.
+
+After a successful purchase:
+
+- Deduct coins from the team's wallet.
+- Add the creature to the team's collection.
+- Record the transaction.
+- Update relevant island power.
+- Show a purchase confirmation.
+
+The backend must prevent:
+
+- Negative balances
+- Duplicate transaction processing
+- Purchasing without sufficient coins
+- Invalid creature IDs
+- Unauthorized purchases
+
+Use database transactions or equivalent atomic operations to ensure coin deductions and creature ownership updates remain consistent.
+
+## 5.7 Coin Economy
+
+Coins are virtual classroom rewards.
+
+There must be no real-money purchases.
+
+Coins may be awarded for:
+
+- Quiz performance
+- Participation
+- Team achievements
+- Special challenges
+- Teacher-created rewards
+
+Create configurable reward rules.
+
+Do not assume that only the highest-scoring team should receive rewards.
+
+All coin changes must be recorded in a transaction history containing:
+
+- Team
+- Amount
+- Transaction type
+- Reason
+- Related quiz or activity, when applicable
+- Timestamp
+
+The coin balance must be calculated and validated securely.
+
+Students must never be able to modify their own coin balances through frontend code.
+
+---
+
+# 6. LIVE CLASSROOM QUIZ SYSTEM
+
+This is one of the most important features of Quiztopia.
+
+The quiz system must support real-time classroom competitions.
+
+## 6.1 Teacher Quiz Builder
+
+Teachers must be able to:
+
+- Create a quiz.
+- Enter a quiz title.
+- Add a description.
+- Select the subject.
+- Select the academic term.
+- Add questions.
+- Select question types.
+- Configure answer options.
+- Identify correct answers.
+- Assign points.
+- Set question timers.
+- Preview the quiz.
+- Save drafts.
+- Publish quizzes.
+
+For the initial release, prioritize multiple-choice questions.
+
+Design the data model so other question types can be added later.
+
+## 6.2 Quiz Lobby
+
+When a teacher hosts a quiz:
+
+- Generate a unique quiz PIN or join code.
+- Display the quiz title.
+- Display participating teams.
+- Display team names and shared avatars.
+- Show a waiting status.
+- Allow the teacher to start the competition.
+
+Teams join using their shared account.
+
+A team should not be allowed to join the same active quiz multiple times.
+
+## 6.3 Live Quiz Interface
+
+The team interface should display:
+
+- Team name
+- Shared avatar
+- Current question
+- Question number
+- Total number of questions
+- Countdown timer
+- Available answers
+- Submit Answer button
+- Submission status
+- Current team score
+
+The captain operates the device while the team discusses the answer.
+
+After the captain submits an answer:
+
+- Lock the answer.
+- Display a submitted confirmation.
+- Prevent changes.
+- Wait for the next question or results.
+
+## 6.4 Real-Time Synchronization
+
+Use a reliable real-time system.
+
+All participating teams must receive the same active question and timer state.
+
+The teacher must be able to:
+
+- Start a quiz.
+- Advance to the next question.
+- End the quiz.
+- Monitor participating teams.
+- View submissions.
+- Display results.
+
+Do not rely on frontend countdown timers as the source of truth.
+
+The backend must determine the official question start time and deadline.
+
+A late submission must be rejected even if the client interface has not yet updated.
+
+## 6.5 Answer Validation
+
+Implement server-side validation.
+
+For every submission, verify:
+
+1. The team belongs to the classroom or is eligible for the competition.
+2. The quiz is active.
+3. The question is currently active.
+4. The submission is within the allowed time.
+5. The team has not already submitted an answer.
+6. The selected answer belongs to that question.
+
+Enforce one submission per team per question using database constraints and server-side logic.
+
+## 6.6 Scoring
+
+Create a configurable scoring system.
+
+The system may consider:
+
+- Correctness
+- Question points
+- Response time, if enabled
+
+Correct answers earn points.
+
+Incorrect answers should not earn correct-answer points.
+
+The teacher must be able to configure whether response speed affects scoring.
+
+Avoid rewarding speed so heavily that teams are discouraged from discussing answers.
+
+The final quiz results must show:
+
+- Team rank
+- Team name
+- Shared avatar
+- Correct answers
+- Total score
+- Rewards earned
+
+---
+
+# 7. LEADERBOARD AND ACHIEVEMENTS
+
+## Leaderboard
+
+Provide:
+
+1. Current quiz leaderboard.
+2. Current-term island power leaderboard.
+3. Previous-term rankings.
+4. Academic-year championship standings.
+
+Display team names and shared avatars.
+
+Do not expose students' surnames or full names.
+
+## Achievements
+
+Create team-based achievements.
+
+Possible examples:
+
+- First Victory
+- Perfect Score
+- Teamwork Champion
+- Quiz Explorer
+- Creature Collector
+- Island Builder
+- Consistent Learners
+- Challenge Conquerors
+
+Achievements should be awarded based on actual conditions, not manually hardcoded visual labels.
+
+Store achievement records so they persist across academic terms.
+
+---
+
+# 8. TEACHER ADMINISTRATION PORTAL
+
+Create a dedicated teacher dashboard.
+
+## Main sections
+
+### Dashboard
+- Total classes
+- Total teams
+- Quizzes created
+- Recent quiz activity
+- Active academic term
+- Quick actions
+
+### Class Management
+- Create classes.
+- Edit class information.
+- View enrolled teams.
+- Manage academic year and term.
+
+### Team Management
+- Create teams.
+- Add 2–4 members per team.
+- Edit first names or nicknames.
+- Assign captains.
+- Generate credentials.
+- Reset passwords.
+- View team progress.
+
+### Quiz Management
+- Create quizzes.
+- Edit questions.
+- Preview quizzes.
+- Publish quizzes.
+- Host live competitions.
+- Review past quizzes.
+
+### Rewards and Shop Management
+- Manage fantasy creatures.
+- Configure creature prices.
+- Configure power values.
+- Manage buildings and decorations.
+- Configure reward rules.
+
+### Term Management
+- Configure Term 1, Term 2, and Term 3.
+- Set the active term.
+- Close completed terms.
+- Finalize rankings.
+- Archive season results.
+- Start the next term.
+
+### Reports and Analytics
+Display useful classroom information:
+
+- Team quiz performance
+- Participation
+- Correct-answer percentages
+- Quiz history
+- Team progression
+- Coin distribution
+- Island power progression
+- Achievement distribution
+
+Use readable charts and tables.
+
+---
+
+# 9. UI/UX DESIGN DIRECTION
+
+Use the attached Quiztopia UI design image as the visual reference.
+
+The generated design represents the desired visual direction, not a requirement to reproduce every detail exactly.
+
+## Visual identity
+
+Quiztopia should feel like a polished fantasy adventure game designed for elementary students.
+
+### Color palette
+
+Primary colors:
+- Royal purple
+- Deep violet
+- Sky blue
+- Light lavender
+
+Accent colors:
+- Golden yellow
+- Warm orange
+- Emerald green
+
+Use soft gradients, subtle shadows, rounded cards, playful icons, and friendly typography.
+
+### Design characteristics
+
+- Kid-friendly
+- Colorful
+- Magical
+- Welcoming
+- Easy to navigate
+- Consistent
+- Modern
+- Responsive
+
+Avoid interfaces that look overly corporate, technical, or cluttered.
+
+### Illustration direction
+
+Use fantasy-themed illustrations:
+
+- Floating islands
+- Magical castles
+- Waterfalls
+- Glowing crystals
+- Fantasy creatures
+- Magical portals
+- Stars and clouds
+- Treasure chests
+
+Fantasy creature illustrations should have a consistent art style.
+
+Use original artwork or properly licensed assets.
+
+Do not rely on random unrelated stock images.
+
+### Responsive design
+
+The application must work on:
+
+- Desktop computers
+- Laptops
+- Tablets
+- Common mobile browsers
+
+The live quiz interface should be especially optimized for tablets and laptops because teams will share one device.
+
+The teacher dashboard should be optimized for desktop use.
+
+---
+
+# 10. TECHNICAL ARCHITECTURE
+
+Use a modern, maintainable web application architecture.
+
+Unless there is a compelling technical reason to change it, use the following stack.
+
+## Frontend
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Lucide icons
+- A reusable component system
+
+## Backend and Database
+
+- Supabase
+- PostgreSQL
+- Supabase Authentication
+- Supabase Realtime
+- Supabase Row Level Security
+- Database functions or secure server-side operations where necessary
+
+## Deployment
+
+- Vercel for the web application.
+- Supabase for backend services and database.
+
+Keep environment variables secure.
+
+Never expose service-role credentials or private API keys in client-side code.
+
+Do not assume that hiding a button is sufficient authorization.
+
+All important permissions must be enforced by the backend and database.
+
+## Architecture principles
+
+- Modular components
+- Clear separation of frontend and backend responsibilities
+- Reusable UI elements
+- Typed database interactions
+- Secure authentication
+- Server-side validation
+- Reliable real-time updates
+- Database transactions for critical operations
+- Maintainable code structure
+- Appropriate error handling
+- Loading and empty states
+- Accessible controls
+
+If a repository or existing project already exists, inspect it before changing the architecture.
+
+Do not overwrite existing working code unnecessarily.
+
+---
+
+# 11. DATABASE DESIGN
+
+Design the database before implementing the full application.
+
+At minimum, consider the following entities and their relationships:
+
+### Authentication and organization
+- teacher_profiles
+- classes
+- class_membership or class_teams
+- teams
+- team_members
+- team_credentials or secure authentication references
+
+### Team identity
+- team_avatars
+- team_islands
+- island_items
+- island_placements
+
+### Fantasy economy
+- creatures
+- team_creatures
+- buildings
+- decorations
+- team_wallets
+- coin_transactions
+
+### Quiz system
+- quizzes
+- quiz_questions
+- question_options
+- quiz_sessions
+- quiz_participants
+- quiz_questions_sessions or active question state
+- team_answers
+- quiz_results
+
+### Progression
+- academic_years
+- academic_terms
+- achievements
+- team_achievements
+- term_rankings
+- season_history
+
+These are proposed logical entities, not a requirement to create unnecessary tables.
+
+Normalize the database where appropriate.
+
+Use foreign keys, unique constraints, indexes, and appropriate deletion rules.
+
+### Critical database rules
+
+- A team belongs to the appropriate class.
+- A team has 2–4 members.
+- A team has one shared avatar.
+- A team has one shared island.
+- A team has one shared wallet.
+- A team can own multiple fantasy creatures.
+- A team can have multiple quiz results.
+- A team cannot submit multiple answers to the same question.
+- A transaction must not be processed twice.
+- A team cannot purchase items without sufficient coins.
+
+Provide database migrations and seed data.
+
+Document the schema.
+
+---
+
+# 12. SECURITY AND DATA INTEGRITY
+
+Treat security as a core requirement, even though the application is designed for elementary students.
+
+Implement:
+
+- Role-based authorization
+- Row Level Security
+- Secure password handling
+- Protected teacher routes
+- Team-specific data access
+- Server-side answer validation
+- Server-side reward calculations
+- Atomic wallet transactions
+- Input validation
+- Rate limiting where appropriate
+- Secure session management
+
+Teams should only access their own private team data and information intentionally shared with the classroom.
+
+Teachers should only access the classes and teams they are authorized to manage.
+
+Never allow students to modify:
+
+- Their coin balance
+- Their quiz scores
+- Their island power
+- Their owned creatures
+- Their achievement records
+- Their answer submissions
+
+Do not expose correct answers before the appropriate reveal stage.
+
+Do not expose sensitive teacher credentials.
+
+Because this application is for children, minimize personal data collection and avoid unnecessary public profiles, direct messaging, and social networking features.
+
+---
+
+# 13. DEVELOPMENT ROADMAP
+
+You are responsible for managing development through the following milestones.
+
+Do not skip milestones.
+
+Each milestone must produce a working and testable application.
+
+## PHASE 1 — Foundation and Architecture
+
+Deliverables:
+
+- Project setup
+- Technical architecture
+- Database schema
+- Authentication
+- Teacher and team roles
+- Protected routes
+- Class creation
+- Team creation
+- Team membership management
+- Team credentials
+
+Acceptance criteria:
+
+- A teacher can log in.
+- A teacher can create a class.
+- A teacher can create teams of 2–4 students.
+- Each team receives shared credentials.
+- A team can log in.
+- Unauthorized users cannot access protected pages.
+
+## PHASE 2 — Team Identity and Dashboard
+
+Deliverables:
+
+- Team dashboard
+- Shared avatar creator
+- Team profile
+- Team island foundation
+- Shared wallet
+- Navigation system
+
+Acceptance criteria:
+
+- Each team has one avatar.
+- All team members are displayed using first names or nicknames.
+- The dashboard displays the correct team information.
+- Team data persists after logging out and logging back in.
+
+## PHASE 3 — Quiz Management
+
+Deliverables:
+
+- Teacher quiz builder
+- Question management
+- Quiz preview
+- Quiz publishing
+- Quiz PIN generation
+- Quiz lobby
+
+Acceptance criteria:
+
+- Teachers can create and save quizzes.
+- Teachers can add and edit multiple-choice questions.
+- Teams can join an eligible quiz.
+- Teams cannot join the same quiz multiple times.
+
+## PHASE 4 — Real-Time Quiz Engine
+
+Deliverables:
+
+- Live quiz interface
+- Real-time question synchronization
+- Countdown timer
+- Team answer submission
+- Server-side validation
+- Scoring engine
+- Results screen
+- Live leaderboard
+
+Acceptance criteria:
+
+- Multiple teams can participate simultaneously.
+- All teams receive the same active question.
+- The official timer is controlled by the backend.
+- Each team submits only one answer per question.
+- Submitted answers cannot be changed.
+- Late submissions are rejected.
+- Results are calculated correctly.
+- Refreshing a page does not create duplicate submissions.
+
+## PHASE 5 — Island Economy
+
+Deliverables:
+
+- Coin reward system
+- Coin transaction history
+- Fantasy creature catalog
+- Pet shop
+- Creature purchases
+- Team collection
+- Island power calculation
+
+Acceptance criteria:
+
+- Correct rewards are credited.
+- Coins are deducted securely.
+- Teams cannot spend more coins than they own.
+- Purchased creatures appear in the collection.
+- Island power updates correctly.
+- Transactions cannot be duplicated.
+
+## PHASE 6 — Island Customization and Progression
+
+Deliverables:
+
+- Island visual interface
+- Buildings
+- Decorations
+- Creature display
+- Item placement
+- Island progression
+
+Acceptance criteria:
+
+- Teams can view their island.
+- Teams can purchase eligible items.
+- Teams can place owned items.
+- Island customization persists.
+- Island power reflects the configured rules.
+
+## PHASE 7 — Academic Terms and Achievements
+
+Deliverables:
+
+- Three-term season management
+- Term leaderboards
+- Historical rankings
+- Achievement system
+- Season archive
+- Academic-year champion
+
+Acceptance criteria:
+
+- Teachers can configure the active term.
+- Each term has separate competitive rankings.
+- Term-specific power resets correctly.
+- Lifetime achievements and creature collections remain intact.
+- Previous-term results remain accessible.
+
+## PHASE 8 — Reports, Quality Assurance, and Deployment
+
+Deliverables:
+
+- Teacher reports
+- Performance analytics
+- Responsive design improvements
+- Accessibility checks
+- Security review
+- End-to-end testing
+- Deployment documentation
+- Production deployment preparation
+
+Acceptance criteria:
+
+- All core workflows work end-to-end.
+- No critical security issues remain.
+- No major functional bugs remain.
+- The application works on desktop, tablet, and mobile browsers.
+- Database migrations and environment configuration are documented.
+- A new installation can be set up using the documentation.
+
+---
+
+# 14. TESTING REQUIREMENTS
+
+You must test actual workflows, not just whether individual pages render.
+
+At minimum, test these scenarios:
+
+### Account testing
+- Teacher login
+- Team login
+- Invalid credentials
+- Password reset
+- Unauthorized route access
+
+### Team testing
+- Create a team with two members.
+- Create a team with three members.
+- Create a team with four members.
+- Reject a team with fewer than two members.
+- Reject a team with more than four members.
+- Verify one shared avatar.
+- Verify one shared island.
+- Verify all members' first names or nicknames are displayed.
+
+### Quiz testing
+- Host a quiz.
+- Join with multiple teams.
+- Submit a correct answer.
+- Submit an incorrect answer.
+- Attempt to submit twice.
+- Attempt to change a submitted answer.
+- Attempt to submit after time expires.
+- Refresh during a live quiz.
+- Verify the final ranking.
+
+### Economy testing
+- Award coins.
+- Purchase a creature.
+- Attempt a purchase without enough coins.
+- Attempt to submit duplicate transactions.
+- Verify collection ownership.
+- Verify island power calculations.
+
+### Season testing
+- Complete Term 1.
+- Archive its results.
+- Start Term 2.
+- Verify the correct competitive reset.
+- Verify that lifetime collections and achievements remain.
+
+Write automated tests for critical business logic and security-sensitive operations.
+
+---
+
+# 15. HOW YOU SHOULD WORK WITH ME
+
+I am the Product Owner, not the lead developer.
+
+I may not know the technical implications of every implementation decision. I expect you to guide me.
+
+Follow these working rules:
+
+### A. Think before coding
+
+Before implementing a milestone:
+
+1. Review the existing codebase.
+2. Identify dependencies.
+3. Identify technical risks.
+4. Plan the implementation.
+5. Explain what you intend to build.
+6. Proceed when the requirements are sufficiently clear.
+
+Do not ask me to approve every minor technical decision.
+
+### B. Make technical decisions
+
+When several technical solutions are possible, recommend the most appropriate one.
+
+Consider:
+
+- Simplicity
+- Reliability
+- Security
+- Scalability
+- Maintainability
+- Development time
+- Ease of future modification
+
+Explain the recommendation briefly.
+
+### C. Build incrementally
+
+Implement one milestone at a time.
+
+Do not generate an enormous collection of disconnected files.
+
+Do not move to the next milestone while the current milestone has unresolved critical issues.
+
+### D. Test your work
+
+After implementation:
+
+- Run the application.
+- Check for compilation errors.
+- Check for runtime errors.
+- Test important interactions.
+- Test database operations.
+- Fix issues before declaring completion.
+
+Never claim that a feature works if you have not verified it.
+
+### E. Maintain documentation
+
+Keep these documents updated:
+
+- README.md
+- PROJECT_ARCHITECTURE.md
+- DATABASE_SCHEMA.md
+- DEVELOPMENT_PROGRESS.md
+- CHANGELOG.md
+
+Maintain a clear record of completed features, pending features, important decisions, and known limitations.
+
+### F. Protect existing work
+
+Never delete or rewrite working features without a good technical reason.
+
+Before major refactoring, explain the reason and identify potential consequences.
+
+### G. Communicate clearly
+
+At the end of each milestone, provide:
+
+1. What was implemented.
+2. What is functional.
+3. What was tested.
+4. Any known issues.
+5. What remains.
+6. The next recommended development step.
+
+Use simple language when explaining technical matters.
+
+---
+
+# 16. IMPORTANT FEATURES TO AVOID IN THE FIRST RELEASE
+
+To keep the project achievable, do not implement these unless I specifically request them:
+
+- Individual student accounts
+- Individual student avatars
+- Multiple devices per team
+- Real-money purchases
+- Daily login rewards
+- Direct messaging between students
+- Public social networking
+- Complex 3D island exploration
+- Unnecessary animations that affect performance
+- Overly complicated game mechanics
+- AI-generated quiz questions as a required core feature
+- Unnecessary external integrations
+
+Focus on a polished, reliable, functional 2D classroom game first.
+
+---
+
+# 17. FINAL PRODUCT EXPECTATION
+
+The finished Quiztopia application should feel like a real educational game, not an ordinary school management system with a quiz feature.
+
+It must combine two experiences:
+
+**The Classroom Experience**
+- Teacher dashboard
+- Class and team management
+- Quiz creation
+- Live competitions
+- Scoring
+- Rankings
+- Classroom rewards
+- Reports
+
+**The Fantasy Game Experience**
+- Shared team avatar
+- Fantasy island
+- Magical creatures
+- Coin economy
+- Pet shop
+- Island customization
+- Achievements
+- Term-based competition
+
+Both experiences must be connected.
+
+For example, completing a classroom quiz should update the team's quiz history, score, rewards, coin balance, and relevant progression records.
+
+Purchasing a creature should update the team's wallet, collection, and island power.
+
+Completing a term should update the season history and champion records.
+
+All systems must work together using actual persistent database records.
+
+The result should be a cohesive, fully functional educational game.
+
+---
+
+# 18. YOUR FIRST TASK: PROJECT INITIALIZATION
+
+Do not immediately start coding every feature.
+
+First, act as the Senior Software Architect and Technical Project Manager.
+
+Your first response must contain:
+
+1. **Product Understanding** — Summarize Quiztopia and demonstrate that you understand its team-based gameplay and confirmed requirements.
+2. **Technical Architecture** — Recommend the architecture, frontend, backend, database, authentication, and deployment approach.
+3. **System Modules** — Identify the major application modules and how they interact.
+4. **Database Plan** — Present the proposed database entities and relationships.
+5. **Development Roadmap** — Break the project into manageable milestones.
+6. **Potential Risks** — Identify technical challenges, especially real-time quizzes, shared team accounts, answer validation, and coin transactions.
+7. **Initial Setup Requirements** — Identify the tools, accounts, environment variables, and configuration needed.
+
+Then wait for my approval of the proposed architecture and development plan before beginning the implementation.
+
+Once approved, begin PHASE 1.
+
+**Remember: You are responsible for the complete technical execution of Quiztopia. Think like a senior developer, plan like a software architect, design like a professional UI/UX team, and test like a dedicated QA department.**
+
+Our goal is not merely to make Quiztopia look good. Our goal is to make it work.

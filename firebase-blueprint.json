@@ -1,0 +1,193 @@
+{
+  "entities": {
+    "TeacherProfile": {
+      "title": "TeacherProfile",
+      "description": "Authenticated teacher profile managing classes, teams, quizzes, and terms.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 200 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["teacher"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "createdAt"]
+    },
+    "Classroom": {
+      "title": "Classroom",
+      "description": "A classroom managed by a teacher with an active academic year and term.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "gradeLevel": { "type": "string", "maxLength": 40 },
+        "academicYearLabel": { "type": "string", "maxLength": 40 },
+        "activeTermNumber": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teacherId", "name", "gradeLevel", "academicYearLabel", "activeTermNumber", "createdAt"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "Shared classroom team account with 2-4 members (first names/nicknames only).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "classId": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "username": { "type": "string", "maxLength": 50 },
+        "captainName": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "classId", "teacherId", "name", "username", "captainName", "createdAt"]
+    },
+    "TeamWallet": {
+      "title": "TeamWallet",
+      "description": "Server-authoritative shared virtual coin balance for a team.",
+      "type": "object",
+      "properties": {
+        "teamId": { "type": "string", "maxLength": 128 },
+        "balance": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["teamId", "balance", "updatedAt"]
+    },
+    "CoinTransaction": {
+      "title": "CoinTransaction",
+      "description": "Immutable ledger entry for every coin reward or purchase.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "txType": { "type": "string", "enum": ["quiz_reward", "teacher_bonus", "achievement_reward", "creature_purchase", "item_purchase"] },
+        "reason": { "type": "string", "maxLength": 200 },
+        "referenceId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "teamId", "amount", "txType", "reason", "createdAt"]
+    },
+    "TeamIsland": {
+      "title": "TeamIsland",
+      "description": "Shared 2D fantasy island and competitive seasonal/lifetime power metrics.",
+      "type": "object",
+      "properties": {
+        "teamId": { "type": "string", "maxLength": 128 },
+        "theme": { "type": "string", "maxLength": 40 },
+        "termPower": { "type": "number" },
+        "lifetimePower": { "type": "number" },
+        "teacherBonusPower": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["teamId", "theme", "termPower", "lifetimePower", "teacherBonusPower", "updatedAt"]
+    },
+    "Creature": {
+      "title": "Creature",
+      "description": "Original fantasy creature available in the Pet Shop.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 60 },
+        "element": { "type": "string", "enum": ["Fire", "Water", "Earth", "Wind", "Light", "Darkness", "Cosmic"] },
+        "rarity": { "type": "string", "enum": ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythical"] },
+        "description": { "type": "string", "maxLength": 300 },
+        "artKey": { "type": "string", "maxLength": 60 },
+        "price": { "type": "number" },
+        "powerValue": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "name", "element", "rarity", "description", "artKey", "price", "powerValue", "isActive"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "Teacher-authored quiz with multiple-choice questions and timing config.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "classId": { "type": "string", "maxLength": 128 },
+        "termNumber": { "type": "number" },
+        "title": { "type": "string", "maxLength": 120 },
+        "subject": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 400 },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "speedBonusEnabled": { "type": "boolean" }
+      },
+      "required": ["id", "teacherId", "classId", "termNumber", "title", "subject", "status", "speedBonusEnabled"]
+    },
+    "QuizSession": {
+      "title": "QuizSession",
+      "description": "Live classroom quiz competition session with server-authoritative timing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "quizId": { "type": "string", "maxLength": 128 },
+        "classId": { "type": "string", "maxLength": 128 },
+        "teacherId": { "type": "string", "maxLength": 128 },
+        "pinCode": { "type": "string", "maxLength": 12 },
+        "status": { "type": "string", "enum": ["lobby", "active", "finished"] },
+        "currentQuestionIndex": { "type": "number" }
+      },
+      "required": ["id", "quizId", "classId", "teacherId", "pinCode", "status", "currentQuestionIndex"]
+    },
+    "TeamAnswer": {
+      "title": "TeamAnswer",
+      "description": "Single immutable answer submission per team per question in a session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "sessionId": { "type": "string", "maxLength": 128 },
+        "questionId": { "type": "string", "maxLength": 128 },
+        "teamId": { "type": "string", "maxLength": 128 },
+        "optionId": { "type": "string", "maxLength": 128 },
+        "isCorrect": { "type": "boolean" },
+        "pointsAwarded": { "type": "number" }
+      },
+      "required": ["id", "sessionId", "questionId", "teamId", "optionId", "isCorrect", "pointsAwarded"]
+    }
+  },
+  "firestore": {
+    "/teachers/{teacherId}": {
+      "schema": { "$ref": "#/entities/TeacherProfile" },
+      "description": "Teacher profiles and credential metadata."
+    },
+    "/classes/{classId}": {
+      "schema": { "$ref": "#/entities/Classroom" },
+      "description": "Classroom configurations owned by a teacher."
+    },
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/Team" },
+      "description": "Shared team accounts and 2-4 member nicknames."
+    },
+    "/team_wallets/{teamId}": {
+      "schema": { "$ref": "#/entities/TeamWallet" },
+      "description": "Shared coin wallet for each team (server-written only)."
+    },
+    "/coin_transactions/{txId}": {
+      "schema": { "$ref": "#/entities/CoinTransaction" },
+      "description": "Immutable coin transaction history."
+    },
+    "/team_islands/{teamId}": {
+      "schema": { "$ref": "#/entities/TeamIsland" },
+      "description": "Team island layout, placements, and power metrics."
+    },
+    "/creatures/{creatureId}": {
+      "schema": { "$ref": "#/entities/Creature" },
+      "description": "Fantasy creature catalog."
+    },
+    "/quizzes/{quizId}": {
+      "schema": { "$ref": "#/entities/Quiz" },
+      "description": "Teacher-authored quizzes."
+    },
+    "/quiz_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/QuizSession" },
+      "description": "Active or completed live quiz sessions."
+    },
+    "/team_answers/{answerId}": {
+      "schema": { "$ref": "#/entities/TeamAnswer" },
+      "description": "Locked team quiz submissions keyed by {sessionId}_{questionId}_{teamId}."
+    }
+  }
+}
